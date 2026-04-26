@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-import { Chip } from "@/components/Chip";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Screen } from "@/components/Screen";
 import { Card } from "@/components/Card";
@@ -14,23 +13,14 @@ import { createDemoMenu } from "@/api/menu";
 import { useProfileStore } from "@/stores/profileStore";
 import { joinRoom } from "@/api/room";
 import { useCartStore } from "@/stores/cartStore";
-import type { DietaryProfile } from "@/types/domain";
 import { useHistoryStore } from "@/stores/historyStore";
 import { TextField } from "@/components/TextField";
 import { StateView } from "@/components/StateView";
-
-const allergyOptions = ["花生", "坚果", "海鲜", "乳制品", "鸡蛋", "小麦", "大豆"];
-const lifestyleOptions = ["素食", "纯素", "不吃猪肉", "不吃牛肉", "低糖", "少辣"];
 
 export default function HomeScreen() {
   const profile = useProfileStore();
   const history = useHistoryStore();
   const cart = useCartStore();
-  const [name, setName] = useState(profile.displayName);
-  const [allergies, setAllergies] = useState<string[]>([]);
-  const [religion, setReligion] = useState("");
-  const [lifestyle, setLifestyle] = useState<string[]>([]);
-  const [notes, setNotes] = useState("");
   const [joinCode, setJoinCode] = useState("");
 
   useEffect(() => {
@@ -38,61 +28,8 @@ export default function HomeScreen() {
     void history.hydrate();
   }, []);
 
-  useEffect(() => {
-    setName(profile.displayName);
-    setAllergies(profile.dietaryProfile.allergies);
-    setReligion(profile.dietaryProfile.religion ?? "");
-    setLifestyle(profile.dietaryProfile.lifestyle);
-    setNotes(profile.dietaryProfile.notes);
-  }, [profile.hydrated]);
-
   if (!profile.hydrated) {
     return <Screen scroll={false}><StateView title="加载中" loading /></Screen>;
-  }
-
-  const toggle = (value: string, current: string[], setter: (next: string[]) => void) => {
-    setter(current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
-  };
-
-  const saveProfile = async () => {
-    const dietaryProfile: DietaryProfile = {
-      allergies,
-      religion: religion.trim() || null,
-      lifestyle,
-      notes: notes.trim()
-    };
-    await profile.save(name.trim() || "我", dietaryProfile);
-  };
-
-  if (!profile.onboarded) {
-    return (
-      <Screen>
-        <View style={styles.logo}><Text style={styles.logoText}>看</Text></View>
-        <Text style={styles.hero}>先告诉我你的忌口。</Text>
-        <Text style={styles.sub}>SeeMenu 会把过敏原、宗教信仰和生活方式限制带入菜单识别和订单翻译。</Text>
-
-        <Text style={styles.label}>昵称</Text>
-        <TextField value={name} onChangeText={setName} placeholder="我" />
-
-        <Text style={styles.label}>过敏原</Text>
-        <View style={styles.chips}>{allergyOptions.map((item) => (
-          <Chip key={item} label={item} selected={allergies.includes(item)} onPress={() => toggle(item, allergies, setAllergies)} />
-        ))}</View>
-
-        <Text style={styles.label}>宗教信仰或饮食规则</Text>
-        <TextField value={religion} onChangeText={setReligion} placeholder="例如：清真、犹太洁食、无" />
-
-        <Text style={styles.label}>生活方式忌口</Text>
-        <View style={styles.chips}>{lifestyleOptions.map((item) => (
-          <Chip key={item} label={item} selected={lifestyle.includes(item)} onPress={() => toggle(item, lifestyle, setLifestyle)} />
-        ))}</View>
-
-        <Text style={styles.label}>补充说明</Text>
-        <TextField value={notes} onChangeText={setNotes} placeholder="例如：不吃香菜，所有菜都少辣" multiline />
-
-        <PrimaryButton tone="accent" onPress={saveProfile}>保存并开始</PrimaryButton>
-      </Screen>
-    );
   }
 
   const handleJoin = async () => {
@@ -128,7 +65,7 @@ export default function HomeScreen() {
       </View>
 
       <Text style={styles.hero}>看懂任何外文菜单。</Text>
-      <Text style={styles.sub}>拍一张照，AI 帮你翻译、点单，并把你的忌口写成服务员能看懂的语言。</Text>
+      <Text style={styles.sub}>拍一张照，AI 帮你翻译、点单，并生成给服务员看的订单说明。</Text>
 
       <View style={styles.featureStack}>
         {[
@@ -145,16 +82,6 @@ export default function HomeScreen() {
           </Card>
         ))}
       </View>
-
-      <Card variant="elevated" size="md" style={styles.profileCard}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>当前忌口资料</Text>
-          <Text style={styles.textLink} onPress={() => profile.reset()}>重新填写</Text>
-        </View>
-        <Text style={styles.cardText}>过敏：{profile.dietaryProfile.allergies.join("、") || "未填写"}</Text>
-        <Text style={styles.cardText}>宗教/规则：{profile.dietaryProfile.religion || "未填写"}</Text>
-        <Text style={styles.cardText}>生活方式：{profile.dietaryProfile.lifestyle.join("、") || "未填写"}</Text>
-      </Card>
 
       <View style={styles.mainCta}>
         <PrimaryButton onPress={() => router.push("/camera")}>拍菜单</PrimaryButton>
@@ -271,27 +198,6 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: fontSize.xs,
   },
-  label: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.sm,
-    color: colors.ink,
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.heavy,
-  },
-  chips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  profileCard: {
-    marginTop: spacing.lg,
-    gap: spacing.cardGap,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
   mainCta: {
     marginTop: spacing.xl,
     paddingTop: spacing.md,
@@ -339,10 +245,6 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: fontSize.lg,
     fontWeight: fontWeight.heavy,
-  },
-  cardText: {
-    color: colors.ink2,
-    fontSize: fontSize.sm,
   },
   historyCard: {
     marginTop: spacing.lg,

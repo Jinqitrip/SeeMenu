@@ -28,8 +28,10 @@ export function MenuImageHotspots({
         const [yMin, xMin, yMax, xMax] = item.bbox2d;
         const left = offsetX + (xMin / 1000) * renderWidth;
         const top = offsetY + (yMin / 1000) * renderHeight;
-        const width = Math.max(44, ((xMax - xMin) / 1000) * renderWidth);
-        const height = Math.max(32, ((yMax - yMin) / 1000) * renderHeight);
+        // Keep min touch size modest so dense menu rows (sample + real OCR) do not overlap;
+        // large mins made adjacent full-width strips stack and steal presses.
+        const width = Math.max(24, ((xMax - xMin) / 1000) * renderWidth);
+        const height = Math.max(12, ((yMax - yMin) / 1000) * renderHeight);
         const active = item.id === activeItemId;
         return (
           <Pressable
