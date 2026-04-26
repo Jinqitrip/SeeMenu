@@ -4,7 +4,12 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Chip } from "@/components/Chip";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Screen } from "@/components/Screen";
+import { Card } from "@/components/Card";
+import { Avatar } from "@/components/Avatar";
 import { colors } from "@/design/colors";
+import { spacing } from "@/design/spacing";
+import { fontSize, fontWeight } from "@/design/typography";
+import { radii } from "@/design/radii";
 import { createDemoMenu } from "@/api/menu";
 import { useProfileStore } from "@/stores/profileStore";
 import { joinRoom } from "@/api/room";
@@ -115,12 +120,13 @@ export default function HomeScreen() {
         <View style={styles.logo}><Text style={styles.logoText}>看</Text></View>
         <View>
           <Text style={styles.brand}>SeeMenu</Text>
-          <Text style={styles.muted}>智拍菜单</Text>
+          <Text style={styles.brandSub}>智拍菜单</Text>
         </View>
-        <Pressable style={styles.profileEntry} onPress={() => router.push("/profile")}>
-          <Text style={styles.profileEntryText}>我</Text>
+        <Pressable style={styles.profileBtn} onPress={() => router.push("/profile")}>
+          <Avatar name={profile.displayName || "我"} size="md" variant="muted" />
         </Pressable>
       </View>
+
       <Text style={styles.hero}>看懂任何外文菜单。</Text>
       <Text style={styles.sub}>拍一张照，AI 帮你翻译、点单，并把你的忌口写成服务员能看懂的语言。</Text>
 
@@ -130,17 +136,17 @@ export default function HomeScreen() {
           ["②", "原图点菜", "点击菜单原图热区看中文详情"],
           ["③", "一键出示", "生成本地语言订单给服务员"]
         ].map(([num, title, desc]) => (
-          <View key={title} style={styles.featureCard}>
+          <Card key={title} variant="elevated" size="md" style={styles.featureCard}>
             <View style={styles.featureIcon}><Text style={styles.featureIconText}>{num}</Text></View>
             <View style={styles.featureBody}>
               <Text style={styles.featureTitle}>{title}</Text>
               <Text style={styles.featureDesc}>{desc}</Text>
             </View>
-          </View>
+          </Card>
         ))}
       </View>
 
-      <View style={styles.card}>
+      <Card variant="elevated" size="md" style={styles.profileCard}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>当前忌口资料</Text>
           <Text style={styles.textLink} onPress={() => profile.reset()}>重新填写</Text>
@@ -148,7 +154,7 @@ export default function HomeScreen() {
         <Text style={styles.cardText}>过敏：{profile.dietaryProfile.allergies.join("、") || "未填写"}</Text>
         <Text style={styles.cardText}>宗教/规则：{profile.dietaryProfile.religion || "未填写"}</Text>
         <Text style={styles.cardText}>生活方式：{profile.dietaryProfile.lifestyle.join("、") || "未填写"}</Text>
-      </View>
+      </Card>
 
       <View style={styles.mainCta}>
         <PrimaryButton onPress={() => router.push("/camera")}>拍菜单</PrimaryButton>
@@ -158,29 +164,29 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={styles.joinCard}>
+      <Card variant="elevated" size="md" style={styles.joinCard}>
         <Text style={styles.cardTitle}>已加入朋友的菜单？</Text>
         <View style={styles.joinRow}>
           <View style={styles.joinInput}>
             <TextField value={joinCode} onChangeText={(value) => setJoinCode(value.toUpperCase())} placeholder="输入房间码" autoCapitalize="characters" maxLength={8} />
           </View>
-          <Pressable disabled={!joinCode.trim()} onPress={handleJoin} style={({ pressed }) => [styles.joinButton, !joinCode.trim() && styles.joinButtonDisabled, pressed && styles.historyPressed]}>
+          <Pressable disabled={!joinCode.trim()} onPress={handleJoin} style={({ pressed }) => [styles.joinButton, !joinCode.trim() && styles.joinButtonDisabled, pressed && { opacity: 0.72 }]}>
             <Text style={styles.joinButtonText}>加入</Text>
           </Pressable>
         </View>
         <Text style={styles.textLink} onPress={() => router.push("/join-room")}>打开完整加入页</Text>
-      </View>
+      </Card>
 
       {history.entries.length > 0 ? (
-        <View style={styles.joinCard}>
+        <Card variant="elevated" size="md" style={styles.historyCard}>
           <Text style={styles.cardTitle}>最近记录</Text>
           {history.entries.slice(0, 5).map((entry) => (
-            <Pressable key={entry.id} hitSlop={6} style={({ pressed }) => [styles.history, pressed && styles.historyPressed]} onPress={() => router.push(entry.kind === "menu" ? `/menu/${entry.id}` : `/receipt/${entry.id}`)}>
+            <Pressable key={entry.id} hitSlop={6} style={({ pressed }) => [styles.history, pressed && { opacity: 0.72 }]} onPress={() => router.push(entry.kind === "menu" ? `/menu/${entry.id}` : `/receipt/${entry.id}`)}>
               <Text style={styles.historyTitle}>{entry.kind === "menu" ? "菜单" : "订单"} · {entry.title}</Text>
               <Text style={styles.historyMeta}>{entry.createdAt.slice(0, 10)}</Text>
             </Pressable>
           ))}
-        </View>
+        </Card>
       ) : null}
     </Screen>
   );
@@ -190,183 +196,171 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginTop: 28
+    gap: spacing.md2,
+    marginTop: spacing.xxl,
   },
-  profileEntry: { marginLeft: "auto", width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg2 },
-  profileEntryText: { color: colors.ink, fontSize: 13, fontWeight: "900" },
+  profileBtn: { marginLeft: "auto" },
   logo: {
     width: 34,
     height: 34,
-    borderRadius: 10,
+    borderRadius: radii.sm,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.accent
+    backgroundColor: colors.accent,
   },
   logoText: {
     color: colors.bg,
-    fontWeight: "900"
+    fontWeight: fontWeight.black,
+    fontSize: fontSize.xl,
   },
   brand: {
     color: colors.ink,
-    fontWeight: "800",
-    fontSize: 16
+    fontWeight: fontWeight.heavy,
+    fontSize: fontSize.xl,
+  },
+  brandSub: {
+    color: colors.muted,
+    fontSize: fontSize.xs,
   },
   hero: {
-    marginTop: 36,
+    marginTop: spacing["3xl"],
     color: colors.ink,
-    fontSize: 34,
+    fontSize: fontSize.h1,
     lineHeight: 42,
-    fontWeight: "900",
-    letterSpacing: -1
+    fontWeight: fontWeight.black,
+    letterSpacing: -1,
   },
   sub: {
-    marginTop: 10,
+    marginTop: spacing.md2,
     color: colors.muted,
-    fontSize: 14,
-    lineHeight: 22
+    fontSize: fontSize.md,
+    lineHeight: 22,
   },
   featureStack: {
-    marginTop: 34,
-    gap: 10
+    marginTop: spacing["3xl"],
+    gap: spacing.sm,
   },
   featureCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    backgroundColor: colors.bg2
+    gap: spacing.lg2,
   },
   featureIcon: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: radii.md,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.bg,
+    backgroundColor: colors.bg2,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line
+    borderColor: colors.line,
   },
   featureIconText: {
     color: colors.muted,
-    fontSize: 12,
-    fontWeight: "900"
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.black,
   },
-  featureBody: {
-    flex: 1
-  },
+  featureBody: { flex: 1 },
   featureTitle: {
     color: colors.ink,
-    fontSize: 14,
-    fontWeight: "800"
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.heavy,
   },
   featureDesc: {
     marginTop: 2,
     color: colors.muted,
-    fontSize: 11
+    fontSize: fontSize.xs,
   },
   label: {
-    marginTop: 20,
-    marginBottom: 8,
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
     color: colors.ink,
-    fontSize: 13,
-    fontWeight: "800"
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.heavy,
   },
   chips: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8
+    gap: spacing.sm,
   },
-  card: {
-    marginTop: 18,
-    marginBottom: 18,
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: colors.bg2,
-    gap: 8
+  profileCard: {
+    marginTop: spacing.lg,
+    gap: spacing.cardGap,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   },
   mainCta: {
-    marginTop: "auto",
-    paddingTop: 12
+    marginTop: spacing.xl,
+    paddingTop: spacing.md,
   },
   inlineLinks: {
-    marginTop: 12,
+    marginTop: spacing.md,
     flexDirection: "row",
     justifyContent: "center",
-    gap: 4
+    gap: 4,
   },
   inlineMuted: {
     color: colors.muted,
-    fontSize: 12
+    fontSize: fontSize.sm,
   },
   textLink: {
     color: colors.accent,
-    fontSize: 12,
-    fontWeight: "800"
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.heavy,
   },
   joinCard: {
-    marginTop: 18,
-    gap: 12
+    marginTop: spacing.lg,
+    gap: spacing.md,
   },
   joinRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10
+    gap: spacing.md2,
   },
-  joinInput: {
-    flex: 1
-  },
+  joinInput: { flex: 1 },
   joinButton: {
     height: 48,
     paddingHorizontal: 18,
-    borderRadius: 24,
+    borderRadius: radii.xxl,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.ink
+    backgroundColor: colors.ink,
   },
-  joinButtonDisabled: {
-    opacity: 0.4
-  },
+  joinButtonDisabled: { opacity: 0.4 },
   joinButtonText: {
     color: colors.bg,
-    fontSize: 13,
-    fontWeight: "800"
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.heavy,
   },
   cardTitle: {
     color: colors.ink,
-    fontSize: 15,
-    fontWeight: "800"
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.heavy,
   },
   cardText: {
     color: colors.ink2,
-    fontSize: 13
+    fontSize: fontSize.sm,
+  },
+  historyCard: {
+    marginTop: spacing.lg,
+    gap: spacing.sm,
   },
   history: {
-    paddingVertical: 10,
+    paddingVertical: spacing.md2,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line
-  },
-  historyPressed: {
-    opacity: 0.72
+    borderColor: colors.line,
   },
   historyTitle: {
     color: colors.ink,
-    fontSize: 14,
-    fontWeight: "700"
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
   },
   historyMeta: {
     marginTop: 3,
     color: colors.muted,
-    fontSize: 11
+    fontSize: fontSize.xs,
   },
-  muted: {
-    color: colors.muted
-  }
 });

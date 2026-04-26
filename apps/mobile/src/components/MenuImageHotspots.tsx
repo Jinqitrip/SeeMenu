@@ -56,11 +56,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: "rgba(255,107,53,0.75)",
-    backgroundColor: "rgba(255,107,53,0.08)"
+    borderColor: colors.accentHotspotBorder,
+    backgroundColor: colors.accentHotspot,
   },
   activeHotspot: {
-    backgroundColor: "rgba(255,107,53,0.22)"
+    backgroundColor: colors.accentHotspotActive,
   },
   hotspotText: {
     color: colors.accent,

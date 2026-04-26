@@ -2,11 +2,15 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { getMenu } from "@/api/menu";
 import { Chip } from "@/components/Chip";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Screen } from "@/components/Screen";
 import { colors } from "@/design/colors";
+import { spacing } from "@/design/spacing";
+import { fontSize, fontWeight } from "@/design/typography";
+import { radii } from "@/design/radii";
 import { useCartStore } from "@/stores/cartStore";
 import { useProfileStore } from "@/stores/profileStore";
 import { getDietaryRisks } from "@/utils/dietary";
@@ -29,13 +33,20 @@ export default function DishScreen() {
 
   return (
     <Screen>
-      <View style={styles.hero}>
+      <LinearGradient
+        colors={[colors.accentSoft, colors.bg]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.hero}
+      >
         <Text style={styles.heroText}>{item.chineseName.slice(0, 1)}</Text>
-      </View>
+      </LinearGradient>
+
       <Text style={styles.title}>{item.chineseName}</Text>
       <Text style={styles.source}>{item.sourceName}</Text>
       <Text style={styles.price}>{item.priceText ?? "价格待确认"}</Text>
       <Text style={styles.desc}>{item.descriptionZh}</Text>
+
       {risks.length > 0 ? (
         <View style={styles.riskBox}>
           <Text style={styles.riskTitle}>与你的忌口有关</Text>
@@ -67,76 +78,78 @@ export default function DishScreen() {
 
 const styles = StyleSheet.create({
   hero: {
-    marginTop: 20,
+    marginTop: spacing.xl,
     height: 220,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.accentSoft
   },
   heroText: {
     color: colors.accent,
-    fontSize: 88,
-    fontWeight: "900"
+    fontSize: fontSize.jumbo,
+    fontWeight: fontWeight.black,
+    opacity: 0.6,
   },
   title: {
-    marginTop: 20,
+    marginTop: spacing.xl,
     color: colors.ink,
-    fontSize: 28,
-    fontWeight: "900"
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.black,
   },
   source: {
     marginTop: 4,
     color: colors.muted,
-    fontSize: 13
+    fontSize: fontSize.sm,
   },
   price: {
-    marginTop: 12,
+    marginTop: spacing.md,
     color: colors.ink,
-    fontSize: 22,
-    fontWeight: "900"
+    fontSize: fontSize.h3,
+    fontWeight: fontWeight.black,
   },
   desc: {
-    marginTop: 12,
+    marginTop: spacing.md,
     color: colors.ink2,
-    fontSize: 15,
-    lineHeight: 24
+    fontSize: fontSize.lg,
+    lineHeight: 24,
   },
   label: {
-    marginTop: 22,
-    marginBottom: 8,
+    marginTop: spacing.xl2,
+    marginBottom: spacing.sm,
     color: colors.muted,
-    fontSize: 12,
-    fontWeight: "900"
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.black,
   },
   chips: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8
+    gap: spacing.sm,
   },
   warning: {
-    marginTop: 10,
+    marginTop: spacing.md2,
     color: colors.accent,
-    fontSize: 12
+    fontSize: fontSize.sm,
   },
   riskBox: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 14,
-    backgroundColor: "#FFF0EF"
+    marginTop: spacing.lg,
+    padding: spacing.lg2,
+    borderRadius: radii.md,
+    backgroundColor: colors.dangerSoft,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.danger,
   },
   riskTitle: {
     color: colors.danger,
-    fontSize: 13,
-    fontWeight: "900"
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.black,
   },
   riskText: {
-    marginTop: 6,
+    marginTop: spacing.sm2,
     color: colors.danger,
-    fontSize: 12
+    fontSize: fontSize.sm,
   },
   noteInput: {
-    marginTop: 12,
-    marginBottom: 18
-  }
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+  },
 });

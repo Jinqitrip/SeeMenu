@@ -1,17 +1,25 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { getMenu } from "@/api/menu";
 import { createRoom, updateCart } from "@/api/room";
 import { DishCard } from "@/components/DishCard";
 import { MenuImageHotspots } from "@/components/MenuImageHotspots";
 import { Screen } from "@/components/Screen";
 import { colors } from "@/design/colors";
+import { shadows } from "@/design/shadows";
+import { spacing } from "@/design/spacing";
 import { useCartStore } from "@/stores/cartStore";
 import { useProfileStore } from "@/stores/profileStore";
 import { useHistoryStore } from "@/stores/historyStore";
 import { getDietaryRisks } from "@/utils/dietary";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StateView } from "@/components/StateView";
 import { TextField } from "@/components/TextField";
 
@@ -25,15 +33,36 @@ export default function MenuScreen() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("全部");
 
+  const prevTotal = useRef(0);
+  const cartBarY = useSharedValue(80);
+  const cartBarOpacity = useSharedValue(0);
+
   useEffect(() => {
     if (menu.data) {
       void history.add({ id: menu.data.id, title: menu.data.title ?? "未命名菜单", kind: "menu", createdAt: new Date().toISOString() });
     }
   }, [menu.data?.id]);
 
+  const total = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    if (total > 0 && prevTotal.current === 0) {
+      cartBarY.value = withSpring(0, { damping: 18, stiffness: 200 });
+      cartBarOpacity.value = withTiming(1, { duration: 200 });
+    } else if (total === 0 && prevTotal.current > 0) {
+      cartBarY.value = withTiming(80, { duration: 150 });
+      cartBarOpacity.value = withTiming(0, { duration: 150 });
+    }
+    prevTotal.current = total;
+  }, [total]);
+
+  const cartBarAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: cartBarY.value }],
+    opacity: cartBarOpacity.value,
+  }));
+
   if (menu.isLoading || !menu.data) return <Screen scroll={false}><StateView title="加载菜单" loading /></Screen>;
   const quantities = new Map(cart.items.map((item) => [item.menuItemId, item.quantity]));
-  const total = cart.items.reduce((sum, item) => sum + item.quantity, 0);
   const categories = ["全部", ...Array.from(new Set(menu.data.items.map((item) => item.sectionName).filter((item): item is string => Boolean(item))))];
   const filteredItems = menu.data.items.filter((item) => {
     const matchesQuery = !query.trim() || `${item.chineseName} ${item.sourceName} ${item.descriptionZh}`.toLowerCase().includes(query.trim().toLowerCase());
@@ -103,10 +132,14 @@ export default function MenuScreen() {
             cart.setSession({ menuId });
             cart.addItem(item);
           }}
+          onRemove={() => cart.removeItem(item.id)}
         />
       ))}
 
-      <View style={styles.cartBar}>
+      <View style={styles.cartBarSpacer} />
+      <Text style={styles.cartLink} onPress={() => router.push("/cart")}>查看我的选菜</Text>
+
+      <Animated.View style={[styles.cartBar, cartBarAnimStyle]}>
         <View style={styles.cartIconWrap}>
           <Text style={styles.cartIcon}>袋</Text>
           {total > 0 ? <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>{total}</Text></View> : null}
@@ -115,79 +148,94 @@ export default function MenuScreen() {
           <Text style={styles.cartTitle}>已选 {total} 份</Text>
           <Text style={styles.cartSub}>可创建房间邀请朋友一起点</Text>
         </View>
-        <Pressable disabled={total === 0} onPress={startRoom} style={({ pressed }) => [styles.cartAction, total === 0 && styles.cartActionDisabled, pressed && styles.cartActionPressed]}>
+        <Pressable disabled={total === 0} onPress={startRoom} style={({ pressed }) => [styles.cartAction, total === 0 && styles.cartActionDisabled, pressed && { transform: [{ scale: 0.96 }] }]}>
           <Text style={styles.cartActionText}>选好</Text>
         </Pressable>
-      </View>
-      <Text style={styles.cartLink} onPress={() => router.push("/cart")}>查看我的选菜</Text>
+      </Animated.View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   meta: {
-    marginTop: 16,
+    marginTop: spacing.lg,
     color: colors.muted,
-    fontSize: 12
+    fontSize: 12,
   },
   title: {
     marginTop: 4,
     color: colors.ink,
     fontSize: 28,
-    fontWeight: "900"
+    fontWeight: "900",
   },
   sub: {
-    marginTop: 6,
-    marginBottom: 16,
+    marginTop: spacing.sm2,
+    marginBottom: spacing.lg,
     color: colors.muted,
-    lineHeight: 21
+    lineHeight: 21,
   },
   warning: {
-    marginTop: 10,
+    marginTop: spacing.md2,
     color: colors.accent,
     fontSize: 12,
-    lineHeight: 18
+    lineHeight: 18,
   },
   debugToggle: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
     color: colors.accent,
     fontSize: 12,
-    fontWeight: "800"
+    fontWeight: "800",
   },
-  search: { marginBottom: 12 },
-  categoryStrip: { gap: 8, paddingBottom: 14 },
-  categoryPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: colors.bg2 },
+  search: { marginBottom: spacing.md },
+  categoryStrip: { gap: spacing.sm, paddingBottom: spacing.lg2 },
+  categoryPill: {
+    paddingHorizontal: spacing.lg2,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: colors.bg2,
+  },
   categoryPillActive: { backgroundColor: colors.ink },
   categoryText: { color: colors.ink2, fontSize: 12, fontWeight: "800" },
   categoryTextActive: { color: colors.bg },
   debugBox: {
-    marginTop: 12,
-    padding: 12,
+    marginTop: spacing.md,
+    padding: spacing.md,
     borderRadius: 12,
-    backgroundColor: colors.bg2
+    backgroundColor: colors.bg2,
   },
   debugLine: {
     color: colors.muted,
     fontSize: 11,
-    lineHeight: 18
+    lineHeight: 18,
   },
   section: {
-    marginTop: 24,
+    marginTop: spacing.section,
     color: colors.ink,
     fontSize: 16,
-    fontWeight: "900"
+    fontWeight: "900",
+  },
+  cartBarSpacer: { height: spacing["3xl"] },
+  cartLink: {
+    marginBottom: spacing.sm,
+    textAlign: "center",
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: "800",
   },
   cartBar: {
-    marginTop: 20,
-    marginBottom: 10,
-    paddingVertical: 8,
-    paddingLeft: 16,
-    paddingRight: 8,
+    position: "absolute",
+    bottom: spacing.lg,
+    left: spacing.lg,
+    right: spacing.lg,
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.sm,
     borderRadius: 26,
     backgroundColor: colors.ink,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12
+    gap: spacing.md,
+    ...shadows.lg,
   },
   cartIconWrap: {
     width: 28,
@@ -195,12 +243,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.12)"
+    backgroundColor: colors.overlayWhite12,
   },
   cartIcon: {
     color: colors.bg,
     fontSize: 12,
-    fontWeight: "900"
+    fontWeight: "900",
   },
   cartBadge: {
     position: "absolute",
@@ -213,25 +261,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: colors.accent,
     borderWidth: 1.5,
-    borderColor: colors.ink
+    borderColor: colors.ink,
   },
   cartBadgeText: {
     color: colors.bg,
     fontSize: 9,
-    fontWeight: "900"
+    fontWeight: "900",
   },
-  cartMeta: {
-    flex: 1
-  },
+  cartMeta: { flex: 1 },
   cartTitle: {
     color: colors.bg,
     fontSize: 14,
-    fontWeight: "900"
+    fontWeight: "900",
   },
   cartSub: {
     marginTop: 2,
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 12
+    color: colors.overlayWhite55,
+    fontSize: 12,
   },
   cartAction: {
     paddingHorizontal: 18,
@@ -239,24 +285,12 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.accent
+    backgroundColor: colors.accent,
   },
-  cartActionDisabled: {
-    opacity: 0.45
-  },
-  cartActionPressed: {
-    transform: [{ scale: 0.96 }]
-  },
+  cartActionDisabled: { opacity: 0.45 },
   cartActionText: {
     color: colors.bg,
     fontSize: 13,
-    fontWeight: "900"
+    fontWeight: "900",
   },
-  cartLink: {
-    marginTop: 8,
-    textAlign: "center",
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: "800"
-  }
 });

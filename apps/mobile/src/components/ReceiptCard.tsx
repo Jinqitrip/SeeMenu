@@ -31,7 +31,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 22,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line
+    borderColor: colors.line,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 4,
   },
   kicker: {
     textAlign: "center",
@@ -94,7 +99,7 @@ const styles = StyleSheet.create({
   },
   confirmText: {
     marginTop: 6,
-    color: "rgba(255,255,255,0.76)",
+    color: colors.overlayWhite76,
     fontSize: 13,
     lineHeight: 20
   }
