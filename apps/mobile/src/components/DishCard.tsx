@@ -16,7 +16,7 @@ export function DishCard({
   onAdd: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={styles.root}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.root, pressed && styles.pressed]}>
       <View style={styles.art}>
         <Text style={styles.artText}>{item.chineseName.slice(0, 1)}</Text>
       </View>
@@ -30,7 +30,7 @@ export function DishCard({
         {risks.length > 0 ? <Text style={styles.risk}>{risks[0]}</Text> : null}
         <View style={styles.bottom}>
           <Text style={styles.price}>{item.priceText ?? "价格待确认"}</Text>
-          <Pressable onPress={onAdd} style={styles.add}>
+          <Pressable onPress={onAdd} hitSlop={10} style={({ pressed }) => [styles.add, pressed && styles.addPressed]}>
             <Text style={styles.addText}>{quantity > 0 ? `+ ${quantity}` : "+"}</Text>
           </Pressable>
         </View>
@@ -46,6 +46,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line
+  },
+  pressed: {
+    opacity: 0.72
   },
   art: {
     width: 72,
@@ -123,6 +126,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.accent
+  },
+  addPressed: {
+    transform: [{ scale: 0.94 }]
   },
   addText: {
     color: colors.bg,

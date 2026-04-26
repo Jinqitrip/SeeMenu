@@ -11,7 +11,7 @@ export function Chip({
   onPress?: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.root, selected && styles.selected]}>
+    <Pressable onPress={onPress} hitSlop={6} style={({ pressed }) => [styles.root, selected && styles.selected, pressed && styles.pressed]}>
       <Text style={[styles.text, selected && styles.selectedText]}>{label}</Text>
     </Pressable>
   );
@@ -29,6 +29,9 @@ const styles = StyleSheet.create({
   selected: {
     backgroundColor: colors.ink,
     borderColor: colors.ink
+  },
+  pressed: {
+    opacity: 0.72
   },
   text: {
     color: colors.ink2,

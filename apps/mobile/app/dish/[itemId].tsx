@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { getMenu } from "@/api/menu";
 import { Chip } from "@/components/Chip";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -10,6 +10,8 @@ import { colors } from "@/design/colors";
 import { useCartStore } from "@/stores/cartStore";
 import { useProfileStore } from "@/stores/profileStore";
 import { getDietaryRisks } from "@/utils/dietary";
+import { TextField } from "@/components/TextField";
+import { StateView } from "@/components/StateView";
 
 const quickNotes = ["不要葱", "不要香菜", "少盐", "少辣", "请确认不含过敏原"];
 
@@ -20,9 +22,9 @@ export default function DishScreen() {
   const profile = useProfileStore();
   const [note, setNote] = useState("");
 
-  if (menu.isLoading || !menu.data) return <Screen><Text>加载菜品...</Text></Screen>;
+  if (menu.isLoading || !menu.data) return <Screen scroll={false}><StateView title="加载菜品" loading /></Screen>;
   const item = menu.data.items.find((candidate) => candidate.id === itemId);
-  if (!item) return <Screen><Text>菜品不存在</Text></Screen>;
+  if (!item) return <Screen scroll={false}><StateView title="菜品不存在" description="这道菜可能已被修正或删除。" actionLabel="返回" onAction={() => router.back()} /></Screen>;
   const risks = getDietaryRisks(item, profile.dietaryProfile);
 
   return (
@@ -52,7 +54,7 @@ export default function DishScreen() {
       <View style={styles.chips}>
         {quickNotes.map((value) => <Chip key={value} label={value} selected={note.includes(value)} onPress={() => setNote(note ? `${note}；${value}` : value)} />)}
       </View>
-      <TextInput value={note} onChangeText={setNote} placeholder="例如：不要葱，对花生过敏" style={styles.input} multiline />
+      <TextField value={note} onChangeText={setNote} placeholder="例如：不要葱，对花生过敏" multiline style={styles.noteInput} />
 
       <PrimaryButton tone="accent" onPress={() => {
         cart.setSession({ menuId });
@@ -133,14 +135,8 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontSize: 12
   },
-  input: {
-    minHeight: 76,
+  noteInput: {
     marginTop: 12,
-    marginBottom: 18,
-    padding: 14,
-    borderRadius: 14,
-    backgroundColor: colors.bg2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line
+    marginBottom: 18
   }
 });

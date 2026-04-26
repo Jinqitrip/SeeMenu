@@ -17,6 +17,7 @@ export function PrimaryButton({
     <Pressable
       disabled={disabled}
       onPress={onPress}
+      hitSlop={8}
       style={({ pressed }) => [
         styles.button,
         tone === "accent" && styles.accent,

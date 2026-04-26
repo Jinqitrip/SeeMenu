@@ -81,8 +81,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     fontWeight: "700"
-  }
-  ,
+  },
   confirmBox: {
     padding: 14,
     borderRadius: 14,

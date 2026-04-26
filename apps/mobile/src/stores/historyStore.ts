@@ -15,6 +15,7 @@ type HistoryState = {
   hydrated: boolean;
   hydrate: () => Promise<void>;
   add: (entry: HistoryEntry) => Promise<void>;
+  clear: () => Promise<void>;
 };
 
 export const useHistoryStore = create<HistoryState>((set, get) => ({
@@ -28,5 +29,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     const entries = [entry, ...get().entries.filter((item) => item.id !== entry.id)].slice(0, 20);
     await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
     set({ entries });
+  },
+  clear: async () => {
+    await AsyncStorage.removeItem(HISTORY_KEY);
+    set({ entries: [] });
   }
 }));

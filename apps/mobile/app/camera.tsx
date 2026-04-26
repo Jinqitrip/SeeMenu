@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { Alert, StyleSheet, Text, View } from "react-native";
-import { PrimaryButton } from "@/components/PrimaryButton";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { colors } from "@/design/colors";
 import { uploadMenuScan } from "@/api/menu";
@@ -26,20 +25,7 @@ export default function CameraScreen() {
       : await ImagePicker.launchImageLibraryAsync({ quality: 0.86, mediaTypes: ImagePicker.MediaTypeOptions.Images });
     if (result.canceled) return;
 
-    setLoading(true);
-    try {
-      const scan = await uploadMenuScan({
-        uri: result.assets[0].uri,
-        dietaryProfile: profile.dietaryProfile,
-        targetLanguage: "zh-CN",
-        countryCode: "JP"
-      });
-      router.replace(`/scan/${scan.scanId}`);
-    } catch (error) {
-      Alert.alert("上传失败", error instanceof Error ? error.message : "请稍后重试");
-    } finally {
-      setLoading(false);
-    }
+    router.push({ pathname: "/photo-review", params: { uri: result.assets[0].uri } });
   };
 
   return (
@@ -57,8 +43,23 @@ export default function CameraScreen() {
       </View>
       <Text style={styles.tip}>将菜单完整放入框内，避免反光和倾斜。</Text>
       <View style={styles.actions}>
-        <PrimaryButton tone="light" disabled={loading} onPress={() => pick("library")}>从相册选择</PrimaryButton>
-        <PrimaryButton tone="accent" disabled={loading} onPress={() => pick("camera")}>{loading ? "识别中..." : "拍菜单"}</PrimaryButton>
+        <View style={styles.modeRow}>
+          <Text style={styles.modeText}>相册</Text>
+          <Text style={styles.modeActive}>· 菜单 ·</Text>
+          <Text style={styles.modeText}>扫码</Text>
+        </View>
+        <View style={styles.cameraControls}>
+          <Pressable disabled={loading} onPress={() => pick("library")} style={({ pressed }) => [styles.sideControl, pressed && styles.pressed]}>
+            <Text style={styles.sideControlText}>相册</Text>
+          </Pressable>
+          <Pressable disabled={loading} onPress={() => pick("camera")} style={({ pressed }) => [styles.shutter, loading && styles.disabled, pressed && !loading && styles.shutterPressed]}>
+            <View style={styles.shutterInner} />
+          </Pressable>
+          <View style={styles.sideControl}>
+            <Text style={styles.sideControlText}>{loading ? "识别" : "闪光"}</Text>
+          </View>
+        </View>
+        {loading ? <Text style={styles.loadingText}>识别中…</Text> : null}
       </View>
     </Screen>
   );
@@ -108,6 +109,64 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: "auto",
-    gap: 12
+    alignItems: "center",
+    gap: 18
+  },
+  modeRow: {
+    flexDirection: "row",
+    gap: 22
+  },
+  modeText: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 11
+  },
+  modeActive: {
+    color: colors.bg,
+    fontSize: 11,
+    fontWeight: "800"
+  },
+  cameraControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 46
+  },
+  sideControl: {
+    width: 48,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.12)"
+  },
+  sideControlText: {
+    color: colors.bg,
+    fontSize: 11,
+    fontWeight: "700"
+  },
+  shutter: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 3,
+    borderColor: colors.bg,
+    padding: 5
+  },
+  shutterInner: {
+    flex: 1,
+    borderRadius: 34,
+    backgroundColor: colors.bg
+  },
+  shutterPressed: {
+    transform: [{ scale: 0.94 }]
+  },
+  pressed: {
+    opacity: 0.72
+  },
+  disabled: {
+    opacity: 0.5
+  },
+  loadingText: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 12
   }
 });

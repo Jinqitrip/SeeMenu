@@ -9,6 +9,8 @@ type CartState = {
   setSession: (input: { menuId?: string | null; roomId?: string | null; memberId?: string | null }) => void;
   addItem: (item: MenuItem, noteZh?: string) => void;
   removeItem: (itemId: string) => void;
+  setQuantity: (itemId: string, quantity: number) => void;
+  setNote: (itemId: string, noteZh: string) => void;
   clear: () => void;
 };
 
@@ -37,6 +39,14 @@ export const useCartStore = create<CartState>((set) => ({
       if (item.quantity <= 1) return [];
       return [{ ...item, quantity: item.quantity - 1 }];
     })
+  })),
+  setQuantity: (itemId, quantity) => set((state) => ({
+    items: quantity <= 0
+      ? state.items.filter((item) => item.menuItemId !== itemId)
+      : state.items.map((item) => item.menuItemId === itemId ? { ...item, quantity } : item)
+  })),
+  setNote: (itemId, noteZh) => set((state) => ({
+    items: state.items.map((item) => item.menuItemId === itemId ? { ...item, noteZh } : item)
   })),
   clear: () => set({ items: [], roomId: null, memberId: null })
 }));

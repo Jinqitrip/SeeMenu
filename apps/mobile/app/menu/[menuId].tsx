@@ -1,11 +1,10 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { getMenu } from "@/api/menu";
 import { createRoom, updateCart } from "@/api/room";
 import { DishCard } from "@/components/DishCard";
 import { MenuImageHotspots } from "@/components/MenuImageHotspots";
-import { PrimaryButton } from "@/components/PrimaryButton";
 import { Screen } from "@/components/Screen";
 import { colors } from "@/design/colors";
 import { useCartStore } from "@/stores/cartStore";
@@ -13,6 +12,8 @@ import { useProfileStore } from "@/stores/profileStore";
 import { useHistoryStore } from "@/stores/historyStore";
 import { getDietaryRisks } from "@/utils/dietary";
 import { useEffect, useState } from "react";
+import { StateView } from "@/components/StateView";
+import { TextField } from "@/components/TextField";
 
 export default function MenuScreen() {
   const { menuId } = useLocalSearchParams<{ menuId: string }>();
@@ -21,6 +22,8 @@ export default function MenuScreen() {
   const profile = useProfileStore();
   const history = useHistoryStore();
   const [showDebug, setShowDebug] = useState(false);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("全部");
 
   useEffect(() => {
     if (menu.data) {
@@ -28,9 +31,15 @@ export default function MenuScreen() {
     }
   }, [menu.data?.id]);
 
-  if (menu.isLoading || !menu.data) return <Screen><Text>加载菜单...</Text></Screen>;
+  if (menu.isLoading || !menu.data) return <Screen scroll={false}><StateView title="加载菜单" loading /></Screen>;
   const quantities = new Map(cart.items.map((item) => [item.menuItemId, item.quantity]));
   const total = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+  const categories = ["全部", ...Array.from(new Set(menu.data.items.map((item) => item.sectionName).filter((item): item is string => Boolean(item))))];
+  const filteredItems = menu.data.items.filter((item) => {
+    const matchesQuery = !query.trim() || `${item.chineseName} ${item.sourceName} ${item.descriptionZh}`.toLowerCase().includes(query.trim().toLowerCase());
+    const matchesCategory = category === "全部" || item.sectionName === category;
+    return matchesQuery && matchesCategory;
+  });
 
   const startRoom = async () => {
     try {
@@ -56,6 +65,14 @@ export default function MenuScreen() {
       <Text style={styles.title}>{menu.data.title ?? "识别菜单"}</Text>
       <Text style={styles.sub}>点击原图中的菜名区域，查看中文解释和忌口风险。</Text>
       <Text style={styles.debugToggle} onPress={() => setShowDebug(!showDebug)}>{showDebug ? "隐藏热区调试" : "显示热区调试"}</Text>
+      <TextField value={query} onChangeText={setQuery} placeholder="搜索菜品" style={styles.search} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryStrip}>
+        {categories.map((item) => (
+          <Pressable key={item} onPress={() => setCategory(item)} style={[styles.categoryPill, category === item && styles.categoryPillActive]}>
+            <Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>{item}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
 
       <MenuImageHotspots
         menu={menu.data}
@@ -74,7 +91,8 @@ export default function MenuScreen() {
       ) : null}
 
       <Text style={styles.section}>菜品列表</Text>
-      {menu.data.items.map((item) => (
+      {menu.data.items.length === 0 ? <StateView compact title="没有识别到菜品" description="可以重新拍摄，或使用 Demo 菜单继续演示。" actionLabel="重新拍摄" onAction={() => router.replace("/camera")} /> : null}
+      {filteredItems.map((item) => (
         <DishCard
           key={item.id}
           item={item}
@@ -89,12 +107,19 @@ export default function MenuScreen() {
       ))}
 
       <View style={styles.cartBar}>
-        <View>
+        <View style={styles.cartIconWrap}>
+          <Text style={styles.cartIcon}>袋</Text>
+          {total > 0 ? <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>{total}</Text></View> : null}
+        </View>
+        <View style={styles.cartMeta}>
           <Text style={styles.cartTitle}>已选 {total} 份</Text>
           <Text style={styles.cartSub}>可创建房间邀请朋友一起点</Text>
         </View>
-        <PrimaryButton disabled={total === 0} tone="accent" onPress={startRoom}>创建房间</PrimaryButton>
+        <Pressable disabled={total === 0} onPress={startRoom} style={({ pressed }) => [styles.cartAction, total === 0 && styles.cartActionDisabled, pressed && styles.cartActionPressed]}>
+          <Text style={styles.cartActionText}>选好</Text>
+        </Pressable>
       </View>
+      <Text style={styles.cartLink} onPress={() => router.push("/cart")}>查看我的选菜</Text>
     </Screen>
   );
 }
@@ -129,6 +154,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "800"
   },
+  search: { marginBottom: 12 },
+  categoryStrip: { gap: 8, paddingBottom: 14 },
+  categoryPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: colors.bg2 },
+  categoryPillActive: { backgroundColor: colors.ink },
+  categoryText: { color: colors.ink2, fontSize: 12, fontWeight: "800" },
+  categoryTextActive: { color: colors.bg },
   debugBox: {
     marginTop: 12,
     padding: 12,
@@ -148,19 +179,84 @@ const styles = StyleSheet.create({
   },
   cartBar: {
     marginTop: 20,
-    padding: 14,
-    borderRadius: 24,
+    marginBottom: 10,
+    paddingVertical: 8,
+    paddingLeft: 16,
+    paddingRight: 8,
+    borderRadius: 26,
     backgroundColor: colors.ink,
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12
+  },
+  cartIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.12)"
+  },
+  cartIcon: {
+    color: colors.bg,
+    fontSize: 12,
+    fontWeight: "900"
+  },
+  cartBadge: {
+    position: "absolute",
+    top: -7,
+    right: -7,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.accent,
+    borderWidth: 1.5,
+    borderColor: colors.ink
+  },
+  cartBadgeText: {
+    color: colors.bg,
+    fontSize: 9,
+    fontWeight: "900"
+  },
+  cartMeta: {
+    flex: 1
   },
   cartTitle: {
     color: colors.bg,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "900"
   },
   cartSub: {
     marginTop: 2,
     color: "rgba(255,255,255,0.6)",
     fontSize: 12
+  },
+  cartAction: {
+    paddingHorizontal: 18,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.accent
+  },
+  cartActionDisabled: {
+    opacity: 0.45
+  },
+  cartActionPressed: {
+    transform: [{ scale: 0.96 }]
+  },
+  cartActionText: {
+    color: colors.bg,
+    fontSize: 13,
+    fontWeight: "900"
+  },
+  cartLink: {
+    marginTop: 8,
+    textAlign: "center",
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: "800"
   }
 });

@@ -1,10 +1,11 @@
 import { useRef } from "react";
 import { useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import ViewShot, { captureRef } from "react-native-view-shot";
 import { getReceipt, renderReceiptImage } from "@/api/receipt";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -12,6 +13,7 @@ import { ReceiptCard } from "@/components/ReceiptCard";
 import { Screen } from "@/components/Screen";
 import { colors } from "@/design/colors";
 import { useHistoryStore } from "@/stores/historyStore";
+import { StateView } from "@/components/StateView";
 
 export default function ReceiptScreen() {
   const { receiptId } = useLocalSearchParams<{ receiptId: string }>();
@@ -44,7 +46,7 @@ export default function ReceiptScreen() {
     }
   };
 
-  if (receipt.isLoading || !receipt.data) return <Screen><Text>加载订单...</Text></Screen>;
+  if (receipt.isLoading || !receipt.data) return <Screen scroll={false} bg={colors.bg2}><StateView title="加载订单" loading /></Screen>;
 
   return (
     <Screen bg={colors.bg2}>
@@ -55,12 +57,23 @@ export default function ReceiptScreen() {
       </ViewShot>
       <View style={styles.actions}>
         <PrimaryButton tone="accent" onPress={() => exportImage(true)}>分享订单图片</PrimaryButton>
-        <PrimaryButton tone="light" onPress={() => exportImage(false)}>保存到相册</PrimaryButton>
-        <PrimaryButton tone="light" onPress={async () => {
-          await renderReceiptImage(receiptId);
-          await receipt.refetch();
-          Alert.alert("已生成", "后端订单图片已生成到本地 data/receipts。");
-        }}>后端生成备份图</PrimaryButton>
+        <View style={styles.linkRow}>
+          <Pressable hitSlop={8} onPress={() => router.push(`/receipt/${receiptId}/show`)}>
+            <Text style={styles.textLink}>放大出示</Text>
+          </Pressable>
+          <Text style={styles.dot}>·</Text>
+          <Pressable hitSlop={8} onPress={() => exportImage(false)}>
+            <Text style={styles.textLink}>保存到相册</Text>
+          </Pressable>
+          <Text style={styles.dot}>·</Text>
+          <Pressable hitSlop={8} onPress={async () => {
+            await renderReceiptImage(receiptId);
+            await receipt.refetch();
+            Alert.alert("已生成", "后端订单图片已生成到本地 data/receipts。");
+          }}>
+            <Text style={styles.textLink}>生成备份图</Text>
+          </Pressable>
+        </View>
       </View>
     </Screen>
   );
@@ -82,5 +95,20 @@ const styles = StyleSheet.create({
   actions: {
     marginTop: 18,
     gap: 12
+  },
+  linkRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8
+  },
+  textLink: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: "800"
+  },
+  dot: {
+    color: colors.muted,
+    fontSize: 12
   }
 });
