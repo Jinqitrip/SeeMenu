@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SeeMenu 智拍菜单</title>
+    <style>
+      :root {
+        --ink: #24190f;
+        --muted: #6e5e4f;
+        --paper: #fff8eb;
+        --card: rgba(255, 252, 242, 0.84);
+        --line: rgba(36, 25, 15, 0.14);
+        --accent: #d96129;
+        --accent-2: #0f766e;
+        --accent-3: #f5b84b;
+        --shadow: 0 24px 70px rgba(79, 45, 18, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+        background:
+          radial-gradient(circle at 12% 18%, rgba(245, 184, 75, 0.36), transparent 28rem),
+          radial-gradient(circle at 92% 8%, rgba(15, 118, 110, 0.18), transparent 30rem),
+          linear-gradient(135deg, #fff4da 0%, #f6ead7 46%, #f1dfc6 100%);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 42px 0 56px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        gap: 28px;
+        align-items: stretch;
+      }
+
+      .hero-copy,
+      .phone,
+      .feature-card,
+      .detail-panel,
+      .flow {
+        border: 1px solid var(--line);
+        background: var(--card);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(16px);
+      }
+
+      .hero-copy {
+        position: relative;
+        overflow: hidden;
+        border-radius: 36px;
+        padding: 42px;
+      }
+
+      .hero-copy::after {
+        content: "";
+        position: absolute;
+        right: -72px;
+        bottom: -92px;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: repeating-linear-gradient(
+          45deg,
+          rgba(217, 97, 41, 0.14) 0 12px,
+          rgba(217, 97, 41, 0) 12px 24px
+        );
+      }
+
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 18px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        color: #7a3b1e;
+        background: rgba(217, 97, 41, 0.12);
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      h1 {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        max-width: 720px;
+        font-size: clamp(44px, 7vw, 86px);
+        line-height: 0.95;
+        letter-spacing: -0.07em;
+      }
+
+      .subtitle {
+        position: relative;
+        z-index: 1;
+        margin: 24px 0 0;
+        max-width: 680px;
+        color: var(--muted);
+        font-size: 20px;
+        line-height: 1.7;
+      }
+
+      .actions {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .primary,
+      .secondary {
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 20px;
+        cursor: pointer;
+        font-weight: 800;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+
+      .primary {
+        color: #fffaf2;
+        background: var(--accent);
+        box-shadow: 0 12px 24px rgba(217, 97, 41, 0.26);
+      }
+
+      .secondary {
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.62);
+        border: 1px solid var(--line);
+      }
+
+      .primary:hover,
+      .secondary:hover,
+      .feature-card:hover {
+        transform: translateY(-2px);
+      }
+
+      .phone {
+        border-radius: 38px;
+        padding: 18px;
+      }
+
+      .phone-inner {
+        min-height: 520px;
+        border-radius: 28px;
+        padding: 22px;
+        background:
+          linear-gradient(180deg, rgba(36, 25, 15, 0.84), rgba(36, 25, 15, 0.64)),
+          linear-gradient(135deg, #243a35, #6c3b20);
+        color: #fff8eb;
+      }
+
+      .status {
+        display: flex;
+        justify-content: space-between;
+        color: rgba(255, 248, 235, 0.74);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .camera-card {
+        margin-top: 38px;
+        border: 1px dashed rgba(255, 248, 235, 0.48);
+        border-radius: 26px;
+        padding: 22px;
+        background: rgba(255, 248, 235, 0.08);
+      }
+
+      .scan-frame {
+        position: relative;
+        min-height: 210px;
+        border-radius: 22px;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(255, 248, 235, 0.1) 1px, transparent 1px),
+          linear-gradient(rgba(255, 248, 235, 0.1) 1px, transparent 1px),
+          linear-gradient(135deg, rgba(245, 184, 75, 0.36), rgba(217, 97, 41, 0.24));
+        background-size: 34px 34px, 34px 34px, auto;
+      }
+
+      .scan-line {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        top: 44%;
+        height: 3px;
+        border-radius: 999px;
+        background: var(--accent-3);
+        box-shadow: 0 0 22px rgba(245, 184, 75, 0.9);
+        animation: scan 2.8s ease-in-out infinite;
+      }
+
+      @keyframes scan {
+        0%,
+        100% {
+          transform: translateY(-74px);
+        }
+        50% {
+          transform: translateY(76px);
+        }
+      }
+
+      .dish-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 248, 235, 0.12);
+      }
+
+      .dish-row strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .dish-row span {
+        display: block;
+        margin-top: 4px;
+        color: rgba(255, 248, 235, 0.68);
+        font-size: 12px;
+      }
+
+      .plus {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        color: #2f1c0d;
+        background: var(--accent-3);
+        font-weight: 900;
+      }
+
+      .section-title {
+        margin: 44px 0 16px;
+      }
+
+      .section-title h2 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 44px);
+        letter-spacing: -0.04em;
+      }
+
+      .section-title p {
+        margin: 10px 0 0;
+        color: var(--muted);
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+      }
+
+      .feature-card {
+        min-height: 210px;
+        border-radius: 28px;
+        padding: 22px;
+        text-align: left;
+        cursor: pointer;
+        transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+      }
+
+      .feature-card[aria-pressed="true"] {
+        border-color: rgba(217, 97, 41, 0.56);
+        background: rgba(255, 250, 239, 0.96);
+      }
+
+      .icon {
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        margin-bottom: 18px;
+        border-radius: 20px;
+        color: #fffaf2;
+        background: var(--accent-2);
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .feature-card:nth-child(2) .icon {
+        background: var(--accent);
+      }
+
+      .feature-card:nth-child(3) .icon {
+        background: #9f6b22;
+      }
+
+      .feature-card:nth-child(4) .icon {
+        background: #365c7d;
+      }
+
+      .feature-card h3 {
+        margin: 0;
+        font-size: 21px;
+      }
+
+      .feature-card p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .click-hint {
+        display: inline-block;
+        margin-top: 16px;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .detail-panel {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 24px;
+        margin-top: 18px;
+        border-radius: 32px;
+        padding: 26px;
+      }
+
+      .mock-image {
+        position: relative;
+        min-height: 280px;
+        border-radius: 26px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 35% 36%, rgba(255, 255, 255, 0.68), transparent 0 72px, transparent 78px),
+          radial-gradient(circle at 62% 56%, rgba(245, 184, 75, 0.8), transparent 0 78px, transparent 84px),
+          radial-gradient(circle at 56% 40%, rgba(15, 118, 110, 0.64), transparent 0 26px, transparent 32px),
+          linear-gradient(135deg, #8a341d, #e2a24b 54%, #fff1cd);
+      }
+
+      .hotspot {
+        position: absolute;
+        border: 2px solid rgba(255, 255, 255, 0.86);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.16);
+        box-shadow: 0 0 0 4px rgba(217, 97, 41, 0.22);
+      }
+
+      .hotspot.one {
+        left: 11%;
+        top: 15%;
+        width: 48%;
+        height: 18%;
+      }
+
+      .hotspot.two {
+        right: 10%;
+        bottom: 18%;
+        width: 38%;
+        height: 20%;
+      }
+
+      .detail-content h3 {
+        margin: 0;
+        font-size: 30px;
+        letter-spacing: -0.03em;
+      }
+
+      .detail-content p {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .detail-content ul {
+        display: grid;
+        gap: 10px;
+        margin: 18px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .detail-content li {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.56);
+        border: 1px solid var(--line);
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+        margin-top: 16px;
+        border-radius: 30px;
+        padding: 18px;
+      }
+
+      .flow-step {
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.48);
+        font-weight: 800;
+        text-align: center;
+      }
+
+      @media (max-width: 900px) {
+        .hero,
+        .detail-panel {
+          grid-template-columns: 1fr;
+        }
+
+        .features {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .flow {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 560px) {
+        .shell {
+          width: min(100% - 20px, 1180px);
+          padding-top: 18px;
+        }
+
+        .hero-copy,
+        .detail-panel,
+        .phone {
+          border-radius: 24px;
+        }
+
+        .hero-copy {
+          padding: 28px;
+        }
+
+        .features {
+          grid-template-columns: 1fr;
+        }
+
+        .phone-inner {
+          min-height: 440px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="kicker">SeeMenu · 智拍菜单 · Hackathon 2026</div>
+          <h1>出国点餐看不懂？拍一下菜单。</h1>
+          <p class="subtitle">
+            AI 识别异国语言菜单，生成中文菜品解释、忌口风险和多人协同点餐页，最后输出服务员能看懂的当地语言订单。
+          </p>
+          <div class="actions">
+            <button class="primary" data-scroll="features">查看核心功能</button>
+            <button class="secondary" data-scroll="flow">查看用户旅程</button>
+          </div>
+        </div>
+
+        <aside class="phone" aria-label="小程序界面预览">
+          <div class="phone-inner">
+            <div class="status">
+              <span>SeeMenu</span>
+              <span>AI scanning</span>
+            </div>
+            <div class="camera-card">
+              <div class="scan-frame">
+                <div class="scan-line"></div>
+              </div>
+              <div class="dish-row">
+                <div>
+                  <strong>鶏もも焼き</strong>
+                  <span>烤鸡腿肉 · 可能含大豆 · 780円</span>
+                </div>
+                <div class="plus">+</div>
+              </div>
+              <div class="dish-row">
+                <div>
+                  <strong>海老天ぷら</strong>
+                  <span>炸虾天妇罗 · 海鲜/麸质风险 · 980円</span>
+                </div>
+                <div class="plus">+</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section id="features" class="section-title">
+        <h2>核心功能</h2>
+        <p>点击卡片查看对应功能详情。这个交互可用于路演页，也可迁移成小程序功能入口。</p>
+      </section>
+
+      <section class="features" aria-label="核心功能卡片">
+        <button class="feature-card" data-feature="scan" aria-pressed="true">
+          <span class="icon">01</span>
+          <h3>智能菜单翻译</h3>
+          <p>拍照上传后，AI 自动识别菜品、价格、中文说明和风险标签。</p>
+          <span class="click-hint">点击展开</span>
+        </button>
+        <button class="feature-card" data-feature="group" aria-pressed="false">
+          <span class="icon">02</span>
+          <h3>多人协同点餐</h3>
+          <p>房间码邀请同行朋友，每个人独立加菜和备注忌口。</p>
+          <span class="click-hint">点击展开</span>
+        </button>
+        <button class="feature-card" data-feature="miniapp" aria-pressed="false">
+          <span class="icon">03</span>
+          <h3>扫码点餐体验</h3>
+          <p>还原国内扫码点餐交互，分类浏览、加购、确认一步完成。</p>
+          <span class="click-hint">点击展开</span>
+        </button>
+        <button class="feature-card" data-feature="receipt" aria-pressed="false">
+          <span class="icon">04</span>
+          <h3>点餐单生成</h3>
+          <p>将菜品、数量、备注翻译成当地语言，保留原文菜名。</p>
+          <span class="click-hint">点击展开</span>
+        </button>
+      </section>
+
+      <section class="detail-panel" aria-live="polite">
+        <div class="mock-image" id="mockImage" aria-label="功能视觉区">
+          <div class="hotspot one"></div>
+          <div class="hotspot two"></div>
+        </div>
+        <div class="detail-content">
+          <h3 id="detailTitle">智能菜单翻译</h3>
+          <p id="detailText">
+            OCR 和视觉模型把菜单图片转换成结构化数据，返回菜品原名、中文名、价格、简介、过敏原推断和置信度。用户可以在低置信度项目上手动修正。
+          </p>
+          <ul id="detailList">
+            <li>支持多语言菜单图片输入。</li>
+            <li>输出严格 JSON，前端直接渲染为菜单页。</li>
+            <li>可选 bbox 热区，点击原图菜名跳转菜品详情。</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="flow" class="section-title">
+        <h2>用户旅程</h2>
+        <p>黑客松演示应围绕完整闭环，而不是单点 AI 能力。</p>
+      </section>
+
+      <section class="flow" aria-label="用户旅程">
+        <div class="flow-step">拍摄菜单</div>
+        <div class="flow-step">AI 解析</div>
+        <div class="flow-step">邀请同伴</div>
+        <div class="flow-step">各自选菜</div>
+        <div class="flow-step">生成订单</div>
+        <div class="flow-step">出示服务员</div>
+      </section>
+    </main>
+
+    <script>
+      const details = {
+        scan: {
+          title: "智能菜单翻译",
+          text: "OCR 和视觉模型把菜单图片转换成结构化数据，返回菜品原名、中文名、价格、简介、过敏原推断和置信度。用户可以在低置信度项目上手动修正。",
+          items: [
+            "支持多语言菜单图片输入。",
+            "输出严格 JSON，前端直接渲染为菜单页。",
+            "可选 bbox 热区，点击原图菜名跳转菜品详情。"
+          ]
+        },
+        group: {
+          title: "多人协同点餐",
+          text: "房主创建点餐房间后，朋友通过房间码加入。每个人维护自己的购物车和忌口备注，系统实时汇总所有人的菜品。",
+          items: [
+            "成员只编辑自己的购物车，减少冲突。",
+            "房主可查看全员汇总和未确认成员。",
+            "实时同步失败时降级为轮询。"
+          ]
+        },
+        miniapp: {
+          title: "模拟扫码点餐页",
+          text: "把翻译结果转成用户熟悉的扫码点餐体验。用户按分类浏览菜品、查看详情、选择数量并添加备注，不需要理解原始菜单结构。",
+          items: [
+            "分类 Tab、菜品卡片和详情弹层。",
+            "风险标签优先展示，如海鲜、坚果、猪肉、酒精。",
+            "保留原文名，方便服务员定位菜品。"
+          ]
+        },
+        receipt: {
+          title: "当地语言点餐单",
+          text: "系统汇总全房间订单，把菜品、数量、忌口和过敏说明翻译成餐厅所在地语言，并生成适合直接出示的订单文本。",
+          items: [
+            "当地语言和中文双语核对。",
+            "明确表达过敏和忌口，而不是只翻译菜名。",
+            "可扩展为图片/PDF 导出和服务员确认回译。"
+          ]
+        }
+      };
+
+      const cards = document.querySelectorAll(".feature-card");
+      const title = document.querySelector("#detailTitle");
+      const text = document.querySelector("#detailText");
+      const list = document.querySelector("#detailList");
+
+      cards.forEach((card) => {
+        card.addEventListener("click", () => {
+          const key = card.dataset.feature;
+          const detail = details[key];
+          cards.forEach((item) => item.setAttribute("aria-pressed", "false"));
+          card.setAttribute("aria-pressed", "true");
+          title.textContent = detail.title;
+          text.textContent = detail.text;
+          list.innerHTML = "";
+          detail.items.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            list.appendChild(li);
+          });
+        });
+      });
+
+      document.querySelectorAll("[data-scroll]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document
+            .querySelector(`#${button.dataset.scroll}`)
+            .scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    </script>
+  </body>
+</html>
