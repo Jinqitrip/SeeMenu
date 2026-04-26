@@ -1,2 +1,17 @@
+.env
+.env.*
+!.env.example
 node_modules/
+dist/
+build/
+.expo/
+.expo-shared/
+coverage/
+*.log
 .DS_Store
+apps/server/data/uploads/*
+apps/server/data/receipts/*
+apps/server/data/*.sqlite
+apps/server/data/*.sqlite-*
+!apps/server/data/uploads/.gitkeep
+!apps/server/data/receipts/.gitkeep
