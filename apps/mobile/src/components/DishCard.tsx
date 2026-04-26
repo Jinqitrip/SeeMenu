@@ -5,11 +5,13 @@ import { colors } from "@/design/colors";
 export function DishCard({
   item,
   quantity = 0,
+  risks = [],
   onPress,
   onAdd
 }: {
   item: MenuItem;
   quantity?: number;
+  risks?: string[];
   onPress: () => void;
   onAdd: () => void;
 }) {
@@ -25,6 +27,7 @@ export function DishCard({
         </View>
         <Text style={styles.source}>{item.sourceName}</Text>
         <Text numberOfLines={2} style={styles.desc}>{item.descriptionZh}</Text>
+        {risks.length > 0 ? <Text style={styles.risk}>{risks[0]}</Text> : null}
         <View style={styles.bottom}>
           <Text style={styles.price}>{item.priceText ?? "价格待确认"}</Text>
           <Pressable onPress={onAdd} style={styles.add}>
@@ -90,6 +93,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     color: colors.ink2
+  },
+  risk: {
+    marginTop: 6,
+    color: colors.danger,
+    backgroundColor: "#FFF0EF",
+    alignSelf: "flex-start",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 5,
+    fontSize: 11,
+    fontWeight: "800"
   },
   bottom: {
     marginTop: 8,

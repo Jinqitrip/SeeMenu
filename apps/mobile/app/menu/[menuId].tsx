@@ -10,12 +10,23 @@ import { Screen } from "@/components/Screen";
 import { colors } from "@/design/colors";
 import { useCartStore } from "@/stores/cartStore";
 import { useProfileStore } from "@/stores/profileStore";
+import { useHistoryStore } from "@/stores/historyStore";
+import { getDietaryRisks } from "@/utils/dietary";
+import { useEffect, useState } from "react";
 
 export default function MenuScreen() {
   const { menuId } = useLocalSearchParams<{ menuId: string }>();
   const menu = useQuery({ queryKey: ["menu", menuId], queryFn: () => getMenu(menuId) });
   const cart = useCartStore();
   const profile = useProfileStore();
+  const history = useHistoryStore();
+  const [showDebug, setShowDebug] = useState(false);
+
+  useEffect(() => {
+    if (menu.data) {
+      void history.add({ id: menu.data.id, title: menu.data.title ?? "未命名菜单", kind: "menu", createdAt: new Date().toISOString() });
+    }
+  }, [menu.data?.id]);
 
   if (menu.isLoading || !menu.data) return <Screen><Text>加载菜单...</Text></Screen>;
   const quantities = new Map(cart.items.map((item) => [item.menuItemId, item.quantity]));
@@ -44,6 +55,7 @@ export default function MenuScreen() {
       <Text style={styles.meta}>东京 · {menu.data.menuLanguage} 菜单</Text>
       <Text style={styles.title}>{menu.data.title ?? "识别菜单"}</Text>
       <Text style={styles.sub}>点击原图中的菜名区域，查看中文解释和忌口风险。</Text>
+      <Text style={styles.debugToggle} onPress={() => setShowDebug(!showDebug)}>{showDebug ? "隐藏热区调试" : "显示热区调试"}</Text>
 
       <MenuImageHotspots
         menu={menu.data}
@@ -53,6 +65,13 @@ export default function MenuScreen() {
       {menu.data.warnings.map((warning) => (
         <Text key={warning} style={styles.warning}>{warning}</Text>
       ))}
+      {showDebug ? (
+        <View style={styles.debugBox}>
+          {menu.data.items.map((item) => (
+            <Text key={item.id} style={styles.debugLine}>{item.id}: {item.bbox2d?.join(",") ?? "no bbox"} · {item.bboxConfidence}</Text>
+          ))}
+        </View>
+      ) : null}
 
       <Text style={styles.section}>菜品列表</Text>
       {menu.data.items.map((item) => (
@@ -60,6 +79,7 @@ export default function MenuScreen() {
           key={item.id}
           item={item}
           quantity={quantities.get(item.id) ?? 0}
+          risks={getDietaryRisks(item, profile.dietaryProfile)}
           onPress={() => router.push({ pathname: "/dish/[itemId]", params: { itemId: item.id, menuId } })}
           onAdd={() => {
             cart.setSession({ menuId });
@@ -101,6 +121,23 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: colors.accent,
     fontSize: 12,
+    lineHeight: 18
+  },
+  debugToggle: {
+    marginBottom: 12,
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: "800"
+  },
+  debugBox: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.bg2
+  },
+  debugLine: {
+    color: colors.muted,
+    fontSize: 11,
     lineHeight: 18
   },
   section: {

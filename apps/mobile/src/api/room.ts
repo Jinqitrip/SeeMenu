@@ -25,3 +25,7 @@ export function getRoom(roomId: string) {
 export function updateCart(roomId: string, memberId: string, items: CartItem[]) {
   return apiJson<Room>(`/api/rooms/${roomId}/members/${memberId}/cart`, { items }, "PUT");
 }
+
+export function setMemberReady(roomId: string, memberId: string, ready: boolean) {
+  return apiJson<Room>(`/api/rooms/${roomId}/members/${memberId}/ready`, { ready }, "PATCH");
+}

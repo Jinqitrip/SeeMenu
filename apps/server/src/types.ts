@@ -46,6 +46,13 @@ export type Scan = {
   status: "processing" | "completed" | "failed";
   menuId: string | null;
   imageUrl: string;
+  imagePath?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageHash?: string;
+  targetLanguage?: string;
+  countryCode?: string;
+  dietaryProfile?: DietaryProfile;
   errorMessage?: string;
   createdAt: string;
 };
@@ -61,6 +68,7 @@ export type RoomMember = {
   displayName: string;
   dietaryProfile: DietaryProfile;
   cart: CartItem[];
+  ready: boolean;
   joinedAt: string;
 };
 

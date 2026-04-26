@@ -7,10 +7,13 @@ import { env } from "./env.js";
 import { menuRoutes } from "./routes/menu.routes.js";
 import { receiptRoutes } from "./routes/receipt.routes.js";
 import { roomRoutes } from "./routes/room.routes.js";
-import { ensureDataDirs } from "./services/menu.service.js";
+import { ensureDataDirs, resumePendingScans } from "./services/menu.service.js";
+import { hydrateStore } from "./store.js";
 
 export async function buildApp() {
   await ensureDataDirs();
+  hydrateStore();
+  resumePendingScans();
   const app = fastify({ logger: true });
   await app.register(cors, { origin: true });
   await app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024 } });

@@ -6,6 +6,7 @@ import { env } from "../env.js";
 import { menus, receipts, rooms } from "../store.js";
 import type { Receipt } from "../types.js";
 import { generateReceiptTextWithGemini } from "./gemini.service.js";
+import { saveReceipt } from "../db.js";
 
 export async function createReceipt(roomId: string, targetLanguage?: string): Promise<Receipt> {
   const room = rooms.get(roomId);
@@ -48,6 +49,7 @@ export async function createReceipt(roomId: string, targetLanguage?: string): Pr
     createdAt: new Date().toISOString()
   };
   receipts.set(receipt.id, receipt);
+  saveReceipt(receipt);
   return receipt;
 }
 
@@ -87,5 +89,6 @@ export async function renderReceiptImage(receiptId: string) {
   await sharp(Buffer.from(svg)).png().toFile(outputPath);
   receipt.imageUrl = `/files/receipts/${filename}`;
   receipts.set(receipt.id, receipt);
+  saveReceipt(receipt);
   return receipt;
 }

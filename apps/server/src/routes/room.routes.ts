@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { dietaryProfileSchema } from "../schemas/menu.schema.js";
 import { findRoomByJoinCode, menus, rooms } from "../store.js";
 import type { CartItem, Room, RoomMember } from "../types.js";
+import { saveRoom } from "../db.js";
 
 function roomSummary(room: Room) {
   return {
@@ -25,6 +26,7 @@ export async function roomRoutes(app: FastifyInstance) {
       displayName: body.hostName || "我",
       dietaryProfile: dietaryProfileSchema.parse(body.dietaryProfile ?? {}),
       cart: [],
+      ready: false,
       joinedAt: new Date().toISOString()
     };
     const room: Room = {
@@ -37,6 +39,7 @@ export async function roomRoutes(app: FastifyInstance) {
       createdAt: new Date().toISOString()
     };
     rooms.set(room.id, room);
+    saveRoom(room);
     return reply.send({ room: roomSummary(room), memberId: member.id });
   });
 
@@ -56,10 +59,12 @@ export async function roomRoutes(app: FastifyInstance) {
       displayName: body.displayName || "朋友",
       dietaryProfile: dietaryProfileSchema.parse(body.dietaryProfile ?? {}),
       cart: [],
+      ready: false,
       joinedAt: new Date().toISOString()
     };
     room.members.push(member);
     rooms.set(room.id, room);
+    saveRoom(room);
     return reply.send({ room: roomSummary(room), memberId: member.id });
   });
 
@@ -68,8 +73,20 @@ export async function roomRoutes(app: FastifyInstance) {
     const room = rooms.get(roomId);
     if (!room) return reply.code(404).send({ error: "room not found" });
     const body = request.body as { items: CartItem[] };
-    room.members = room.members.map((member) => member.id === memberId ? { ...member, cart: body.items ?? [] } : member);
+    room.members = room.members.map((member) => member.id === memberId ? { ...member, cart: body.items ?? [], ready: false } : member);
     rooms.set(room.id, room);
+    saveRoom(room);
+    return reply.send(roomSummary(room));
+  });
+
+  app.patch("/api/rooms/:roomId/members/:memberId/ready", async (request, reply) => {
+    const { roomId, memberId } = request.params as { roomId: string; memberId: string };
+    const room = rooms.get(roomId);
+    if (!room) return reply.code(404).send({ error: "room not found" });
+    const body = request.body as { ready?: boolean };
+    room.members = room.members.map((member) => member.id === memberId ? { ...member, ready: Boolean(body.ready) } : member);
+    rooms.set(room.id, room);
+    saveRoom(room);
     return reply.send(roomSummary(room));
   });
 }

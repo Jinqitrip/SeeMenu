@@ -102,13 +102,13 @@ export const colors = {
 React Native / Expo
   |
   | HTTPS: 上传图片、拉取菜单、提交购物车、生成订单
-  | WebSocket: 房间购物车实时同步
+  | Polling: 房间购物车同步
   v
 Node.js + TypeScript Backend
   |
   | 图片压缩、Gemini 调用、JSON 校验、订单翻译、订单图片生成
   v
-Node.js Memory Store
+SQLite + Runtime Cache
   |
   v
 Local File System
@@ -123,7 +123,7 @@ AI Provider
 2. `@google/genai` 调用 Gemini API。
 3. `zod` 校验 Gemini 返回 JSON。
 4. `sharp` 做图片压缩、裁剪和服务端订单图生成备选。
-5. 内存 Map 保存菜单、房间、订单状态。
+5. SQLite 持久化菜单、房间、订单和 Gemini 缓存，运行时 Map 做快速读取。
 6. 本地 `apps/server/data/` 保存上传图片和订单图片。
 
 推荐 RN/Expo 依赖：

@@ -5,16 +5,19 @@ import { Chip } from "@/components/Chip";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Screen } from "@/components/Screen";
 import { colors } from "@/design/colors";
+import { createDemoMenu } from "@/api/menu";
 import { useProfileStore } from "@/stores/profileStore";
 import { joinRoom } from "@/api/room";
 import { useCartStore } from "@/stores/cartStore";
 import type { DietaryProfile } from "@/types/domain";
+import { useHistoryStore } from "@/stores/historyStore";
 
 const allergyOptions = ["花生", "坚果", "海鲜", "乳制品", "鸡蛋", "小麦", "大豆"];
 const lifestyleOptions = ["素食", "纯素", "不吃猪肉", "不吃牛肉", "低糖", "少辣"];
 
 export default function HomeScreen() {
   const profile = useProfileStore();
+  const history = useHistoryStore();
   const cart = useCartStore();
   const [name, setName] = useState(profile.displayName);
   const [allergies, setAllergies] = useState<string[]>([]);
@@ -25,6 +28,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     void profile.hydrate();
+    void history.hydrate();
   }, []);
 
   useEffect(() => {
@@ -94,6 +98,15 @@ export default function HomeScreen() {
     }
   };
 
+  const handleDemo = async () => {
+    try {
+      const scan = await createDemoMenu();
+      if (scan.menuId) router.push(`/menu/${scan.menuId}`);
+    } catch (error) {
+      Alert.alert("Demo 加载失败", error instanceof Error ? error.message : "请稍后重试");
+    }
+  };
+
   return (
     <Screen>
       <View style={styles.topRow}>
@@ -115,12 +128,24 @@ export default function HomeScreen() {
       </View>
 
       <PrimaryButton tone="accent" onPress={() => router.push("/camera")}>拍菜单</PrimaryButton>
+      <PrimaryButton tone="light" onPress={handleDemo}>Demo 模式：加载日文菜单</PrimaryButton>
 
       <View style={styles.joinCard}>
         <Text style={styles.cardTitle}>已加入朋友的菜单？</Text>
         <TextInput value={joinCode} onChangeText={setJoinCode} placeholder="输入房间码" autoCapitalize="characters" style={styles.input} />
         <PrimaryButton disabled={!joinCode.trim()} onPress={handleJoin}>加入房间</PrimaryButton>
       </View>
+
+      {history.entries.length > 0 ? (
+        <View style={styles.joinCard}>
+          <Text style={styles.cardTitle}>最近记录</Text>
+          {history.entries.slice(0, 5).map((entry) => (
+            <Text key={entry.id} style={styles.history} onPress={() => router.push(entry.kind === "menu" ? `/menu/${entry.id}` : `/receipt/${entry.id}`)}>
+              {entry.kind === "menu" ? "菜单" : "订单"} · {entry.title}
+            </Text>
+          ))}
+        </View>
+      ) : null}
     </Screen>
   );
 }
@@ -208,6 +233,12 @@ const styles = StyleSheet.create({
   cardText: {
     color: colors.ink2,
     fontSize: 13
+  },
+  history: {
+    paddingVertical: 10,
+    color: colors.ink,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line
   },
   muted: {
     color: colors.muted

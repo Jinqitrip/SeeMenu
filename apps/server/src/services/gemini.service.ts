@@ -56,6 +56,49 @@ const menuResponseSchema = {
   required: ["menu_language", "target_language", "sections", "warnings"]
 };
 
+const menuStructureSchema = {
+  type: Type.OBJECT,
+  properties: {
+    title: { type: Type.STRING, nullable: true },
+    menu_language: { type: Type.STRING },
+    currency: { type: Type.STRING, nullable: true },
+    sections: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          id: { type: Type.STRING },
+          source_name: { type: Type.STRING, nullable: true },
+          items: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                source_name: { type: Type.STRING },
+                price: { type: Type.NUMBER, nullable: true },
+                price_text: { type: Type.STRING, nullable: true },
+                confidence: { type: Type.STRING, enum: ["high", "medium", "low"] },
+                bbox_2d: {
+                  type: Type.ARRAY,
+                  nullable: true,
+                  minItems: 4,
+                  maxItems: 4,
+                  items: { type: Type.NUMBER }
+                },
+                bbox_confidence: { type: Type.STRING, enum: ["high", "medium", "low"] }
+              },
+              required: ["id", "source_name", "confidence", "bbox_confidence"]
+            }
+          }
+        },
+        required: ["id", "items"]
+      }
+    }
+  },
+  required: ["menu_language", "sections"]
+};
+
 function getClient() {
   if (!env.geminiApiKey) return null;
   return new GoogleGenAI({ apiKey: env.geminiApiKey });
@@ -67,7 +110,9 @@ export async function parseMenuImageWithGemini(input: {
   targetLanguage: string;
   countryCode?: string;
   dietaryProfile?: DietaryProfile;
+  cached?: ParsedGeminiMenu | null;
 }): Promise<ParsedGeminiMenu> {
+  if (input.cached) return input.cached;
   const ai = getClient();
   if (!ai) return sampleParsedMenu();
 
@@ -75,35 +120,52 @@ export async function parseMenuImageWithGemini(input: {
     ? `用户忌口资料：过敏原=${input.dietaryProfile.allergies.join(",") || "无"}；宗教=${input.dietaryProfile.religion || "未填写"}；生活方式=${input.dietaryProfile.lifestyle.join(",") || "无"}；补充=${input.dietaryProfile.notes || "无"}。`
     : "用户尚未提供忌口资料。";
 
-  const prompt = [
-    "你是 SeeMenu 的菜单识别引擎。请识别图片中的餐厅菜单，输出严格 JSON。",
+  const structurePrompt = [
+    "你是 SeeMenu 的菜单 OCR 和版面定位引擎。请只识别菜单原文、价格、分类和 bbox，输出严格 JSON。",
+    "不要翻译，不要推断食材。",
     `目标语言：${input.targetLanguage}。旅行国家或地区：${input.countryCode || "unknown"}。`,
-    dietaryText,
-    "每个菜品必须保留菜单原文名、中文名、价格、中文说明、推断食材、推断过敏原、饮食风险标签、置信度。",
     "请为每个菜品返回 bbox_2d，格式为 [y_min, x_min, y_max, x_max]，坐标归一化到 0-1000。bbox 覆盖菜名和价格所在行即可。",
-    "如果价格或 bbox 不确定，返回 null；不要编造。",
-    "过敏原和忌口风险只能作为 guess/risk 推断，不要说成确定事实。"
+    "如果价格或 bbox 不确定，返回 null；不要编造。"
   ].join("\n");
 
-  const result = await ai.models.generateContent({
+  const structureResult = await ai.models.generateContent({
     model: env.geminiModel,
     contents: [
       {
         role: "user",
         parts: [
-          { text: prompt },
+          { text: structurePrompt },
           { inlineData: { mimeType: input.mimeType, data: input.imageBase64 } }
         ]
       }
     ],
     config: {
       responseMimeType: "application/json",
+      responseSchema: menuStructureSchema
+    }
+  });
+
+  const structure = JSON.parse(structureResult.text ?? "{}") as unknown;
+  const enrichmentPrompt = [
+    "你是 SeeMenu 的菜单翻译和忌口风险分析引擎。请基于已识别结构补全中文名、中文说明、食材推断、过敏原推断、饮食风险标签。",
+    `目标语言：${input.targetLanguage}。旅行国家或地区：${input.countryCode || "unknown"}。`,
+    dietaryText,
+    "必须保留原文菜名、价格和 bbox，不要新增菜单结构中不存在的菜。",
+    "过敏原和忌口风险只能作为 guess/risk 推断，不要说成确定事实。",
+    "输出必须严格符合完整菜单 JSON schema。",
+    `已识别结构：${JSON.stringify(structure)}`
+  ].join("\n");
+
+  const enrichmentResult = await ai.models.generateContent({
+    model: env.geminiModel,
+    contents: [{ role: "user", parts: [{ text: enrichmentPrompt }] }],
+    config: {
+      responseMimeType: "application/json",
       responseSchema: menuResponseSchema
     }
   });
 
-  const text = result.text;
-  const parsed = JSON.parse(text ?? "{}") as unknown;
+  const parsed = JSON.parse(enrichmentResult.text ?? "{}") as unknown;
   return parsedGeminiMenuSchema.parse(parsed);
 }
 

@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { Alert, StyleSheet, Text, View } from "react-native";
@@ -10,11 +11,19 @@ import { PrimaryButton } from "@/components/PrimaryButton";
 import { ReceiptCard } from "@/components/ReceiptCard";
 import { Screen } from "@/components/Screen";
 import { colors } from "@/design/colors";
+import { useHistoryStore } from "@/stores/historyStore";
 
 export default function ReceiptScreen() {
   const { receiptId } = useLocalSearchParams<{ receiptId: string }>();
   const receipt = useQuery({ queryKey: ["receipt", receiptId], queryFn: () => getReceipt(receiptId) });
+  const history = useHistoryStore();
   const shotRef = useRef<ViewShot>(null);
+
+  useEffect(() => {
+    if (receipt.data) {
+      void history.add({ id: receipt.data.id, title: `订单 ${receipt.data.createdAt.slice(0, 10)}`, kind: "receipt", createdAt: receipt.data.createdAt });
+    }
+  }, [receipt.data?.id]);
 
   const exportImage = async (share: boolean) => {
     try {

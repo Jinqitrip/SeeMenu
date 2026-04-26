@@ -32,3 +32,9 @@ export function getScan(scanId: string) {
 export function getMenu(menuId: string) {
   return apiGet<Menu>(`/api/menus/${menuId}`);
 }
+
+export async function createDemoMenu() {
+  const response = await fetch(`${API_BASE_URL}/api/demo/menu`, { method: "POST" });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json() as Promise<Scan>;
+}

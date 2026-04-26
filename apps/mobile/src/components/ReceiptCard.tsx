@@ -8,6 +8,11 @@ export function ReceiptCard({ receipt }: { receipt: Receipt }) {
       <Text style={styles.kicker}>SeeMenu ORDER</Text>
       <Text style={styles.title}>请向服务员出示</Text>
       <View style={styles.dash} />
+      <View style={styles.confirmBox}>
+        <Text style={styles.confirmTitle}>请确认</Text>
+        <Text style={styles.confirmText}>如果以下内容可以下单，请告诉我 OK。若有过敏或忌口风险，请指出。</Text>
+      </View>
+      <View style={styles.dash} />
       <Text style={styles.section}>当地语言订单</Text>
       <Text style={styles.target}>{receipt.targetLanguageText}</Text>
       <View style={styles.dash} />
@@ -76,5 +81,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     fontWeight: "700"
+  }
+  ,
+  confirmBox: {
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: colors.ink
+  },
+  confirmTitle: {
+    color: colors.bg,
+    fontSize: 18,
+    fontWeight: "900"
+  },
+  confirmText: {
+    marginTop: 6,
+    color: "rgba(255,255,255,0.76)",
+    fontSize: 13,
+    lineHeight: 20
   }
 });

@@ -60,6 +60,7 @@ export type RoomMember = {
   displayName: string;
   dietaryProfile: DietaryProfile;
   cart: CartItem[];
+  ready: boolean;
   joinedAt: string;
 };
 

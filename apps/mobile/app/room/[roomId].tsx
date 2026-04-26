@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { createReceipt } from "@/api/receipt";
-import { getRoom, updateCart } from "@/api/room";
+import { getRoom, setMemberReady, updateCart } from "@/api/room";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Screen } from "@/components/Screen";
 import { colors } from "@/design/colors";
@@ -33,6 +33,13 @@ export default function RoomScreen() {
     }
   };
 
+  const markReady = async () => {
+    if (!cart.memberId) return;
+    await syncCart();
+    await setMemberReady(roomId, cart.memberId, true);
+    await room.refetch();
+  };
+
   if (room.isLoading || !room.data) return <Screen><Text>加载房间...</Text></Screen>;
 
   return (
@@ -51,7 +58,7 @@ export default function RoomScreen() {
       {room.data.members.map((member) => (
         <View key={member.id} style={styles.member}>
           <Text style={styles.memberName}>{member.displayName}</Text>
-          <Text style={styles.memberMeta}>已选 {member.cart.reduce((sum, item) => sum + item.quantity, 0)} 份</Text>
+          <Text style={styles.memberMeta}>已选 {member.cart.reduce((sum, item) => sum + item.quantity, 0)} 份 · {member.ready ? "已选好" : "未确认"}</Text>
           <Text style={styles.memberDiet}>忌口：{[
             ...member.dietaryProfile.allergies,
             member.dietaryProfile.religion,
@@ -64,6 +71,7 @@ export default function RoomScreen() {
       <View style={styles.footer}>
         <Text style={styles.total}>合计 {room.data.totalItems} 份</Text>
         <PrimaryButton tone="light" onPress={syncCart}>同步我的选菜</PrimaryButton>
+        <PrimaryButton tone="light" onPress={markReady}>我已选好</PrimaryButton>
         <PrimaryButton tone="accent" onPress={makeReceipt}>生成订单</PrimaryButton>
       </View>
     </Screen>
