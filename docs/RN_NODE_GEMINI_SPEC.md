@@ -56,7 +56,6 @@ expo-sharing
 react-native-view-shot
 @tanstack/react-query
 zustand
-socket.io-client
 react-native-svg
 ```
 
@@ -151,9 +150,6 @@ fastify
 @google/genai
 zod
 sharp
-socket.io
-prisma
-@prisma/client
 ```
 
 环境变量：
@@ -161,9 +157,9 @@ prisma
 ```text
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-2.5-flash
-DATABASE_URL=...
-STORAGE_BUCKET=...
-PUBLIC_APP_URL=...
+PORT=3001
+PUBLIC_BASE_URL=http://localhost:3001
+EXPO_PUBLIC_API_URL=http://localhost:3001
 ```
 
 ## 6. Gemini 调用策略
@@ -256,6 +252,5 @@ MVP 主线不引入端侧或自部署 OCR。原因：
 1. 真实 `GEMINI_API_KEY` 不得进入 Git。
 2. RN 包内不得包含 Gemini key。
 3. 服务端日志不要打印完整请求图片、完整 key 或用户忌口隐私。
-4. 订单和菜单图片如果上传对象存储，需要设置过期链接或访问控制。
+4. 第一版订单和菜单图片只保存在本地 `apps/server/data/`；后续如果上传对象存储，需要设置过期链接或访问控制。
 5. 用户过敏原提示必须标注为 AI 推断，需要服务员确认。
-

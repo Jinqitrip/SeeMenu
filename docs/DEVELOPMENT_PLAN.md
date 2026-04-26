@@ -108,10 +108,10 @@ Node.js + TypeScript Backend
   |
   | 图片压缩、Gemini 调用、JSON 校验、订单翻译、订单图片生成
   v
-PostgreSQL / Supabase
+Node.js Memory Store
   |
   v
-Object Storage
+Local File System
 
 AI Provider
   Gemini API: 图片理解、OCR、bbox 热区、结构化菜单、订单翻译
@@ -123,8 +123,8 @@ AI Provider
 2. `@google/genai` 调用 Gemini API。
 3. `zod` 校验 Gemini 返回 JSON。
 4. `sharp` 做图片压缩、裁剪和服务端订单图生成备选。
-5. `socket.io` 或原生 WebSocket 做房间同步。
-6. `Prisma` + PostgreSQL/Supabase 管理关系数据。
+5. 内存 Map 保存菜单、房间、订单状态。
+6. 本地 `apps/server/data/` 保存上传图片和订单图片。
 
 推荐 RN/Expo 依赖：
 
@@ -133,7 +133,7 @@ AI Provider
 3. `react-native-view-shot` 用于订单图片导出。
 4. `@tanstack/react-query` 管理 API 请求。
 5. `zustand` 管理本地购物车状态。
-6. `socket.io-client` 管理房间同步。
+6. 轮询房间接口管理第一版协同状态。
 7. `react-native-svg` 承载图标和部分视觉元素。
 
 ## 6. Gemini 菜单识别方案
